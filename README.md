@@ -1,5 +1,6 @@
-
-#### LIBERTAS
+<p align="center">
+LIBERTAS
+</p>
 
 LIBERTAS - Blogging Web System
 
