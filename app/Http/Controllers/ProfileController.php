@@ -12,20 +12,19 @@ class ProfileController extends Controller
      */
     public function index()
     {
-        $users = User::all();
+       $users = User::all();
 
-        $all = $users->map(function ($user) {
+        $userData = $users->map(function ($user) {
             return [
-                "username" => $user->username,
-                "created_at" => $user->created_at
+                "username"   => $user->username,
+                "created_at" => $user->created_at,
             ];
         });
 
-        return response()->json(
-            [
-                "registered users" => $all
-            ]
-        );
+        return response()->json([
+            "registered_users" => $userData,
+        ]);
+
     }
 
     /**
@@ -37,20 +36,20 @@ class ProfileController extends Controller
      */
     public function show($username)
     {
-        $user = User::where('username', $username)->first();
+       $user = User::where('username', $username)->first();
 
         if (!$user) {
-            return response()->json(['message' => 'User not found']);
+            return response()->json(['message' => 'The user could not be found']);
         }
 
-        $user = [
-            "username" => $user->username,
-            "created_at" => $user->created_at
+        $userData = [
+            "username"   => $user->username,
+            "created_at" => $user->created_at,
         ];
 
+        return response()->json([
+            "registered_user" => $userData,
+        ]);
 
-        return response()->json(
-            ["registered user" => $user]
-        );
     }
 }
