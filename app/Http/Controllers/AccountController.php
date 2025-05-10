@@ -11,34 +11,33 @@ class AccountController extends Controller
 
     public function index()
     {
-        $user = User::with('posts.comments.user')->find(auth()->id());
-        $personal_info = [
+     $user = User::with('posts.comments.user')->find(auth()->id());
+
+        $profileData = [
             "username" => $user->username,
             "email" => $user->email,
-            "created_at" => $user->created_at
+            "created_at" => $user->created_at,
         ];
-        $posts = $user->posts->map(function ($post) {
+
+        $postsData = $user->posts->map(function ($post) {
             return [
-                "post_id" => $post->id,
-                'post_id' => $post->id,
-                'title' => $post->title,
-                'content' => $post->content,
-                'created_at' => $post->created_at,
-                'comments' => $post->comments->map(function ($comment) {
-                    return [
-                        "comment_id" => $comment->id,
-                        'commentor' => $comment->user->username,
-                        'content' => $comment->content,
-                    ];
-                }),
+                "post_id"   => $post->id, 
+                "title"     => $post->title,
+                "content"   => $post->content,
+                "created_at"=> $post->created_at,
+                "comments"  => $post->comments->map(fn($comment) => [
+                    "comment_id" => $comment->id,
+                    "commentor"  => $comment->user->username,
+                    "content"    => $comment->content,
+                ])
             ];
         });
-        return response()->json(
-            [
-                "profile" => $personal_info,
-                "My Post" => $posts
-            ]
-        );
+
+        return response()->json([
+            "profile" => $profileData,
+            "My Post" => $postsData,
+        ]);
+
     }
 
 
@@ -47,22 +46,23 @@ class AccountController extends Controller
 
     public function edit(Request $request)
     {
-        $request->validate([
+       $request->validate([
             'username' => 'required',
-            'email'    => 'required'
+            'email'    => 'required',
         ]);
 
         $user = User::findOrFail(auth()->id());
 
         $user->update([
-            'username' => $request->input('username'),
-            'email'    => $request->input('email'),
+            'username' => $request->username,
+            'email'    => $request->email,
         ]);
 
         return response()->json([
-            'message' => 'Account updated successfully',
+            'message' => 'Your account has been updated successfully',
             'user'    => $user
         ]);
+
     }
 
 
@@ -70,20 +70,21 @@ class AccountController extends Controller
     {
         $request->validate([
             'current_password' => 'required|string',
-            'new_password' => 'required|string|min:6|confirmed'
+            'new_password'     => 'required|string|min:6|confirmed',
         ]);
 
         $user = auth()->user();
 
         if (!$user || !Hash::check($request->current_password, $user->password)) {
-            return response()->json(['message' => 'Current password is incorrect']);
+            return response()->json(['message' => 'The current password is incorrect']);
         }
 
         $user->update([
-            'password' => Hash::make($request->new_password)
+            'password' => Hash::make($request->new_password),
         ]);
 
-        return response()->json(['message' => 'Password updated successfully']);
+        return response()->json(['message' => 'Your password has been updated successfully']);
+
     }
 
 
@@ -94,13 +95,16 @@ class AccountController extends Controller
         ]);
 
         $user = auth()->user();
+
         if (!$user || !Hash::check($request->current_password, $user->password)) {
-            return response()->json(['message' => 'Password is incorrect']);
+            return response()->json(['message' => 'The provided password is incorrect']);
         }
 
-        $user = User::findorfail(auth()->id());
+        $user = User::findOrFail(auth()->id());
         $user->delete();
         $user->tokens()->delete();
-        return response()->json(['message' => 'User deleted successfully']);
+
+        return response()->json(['message' => 'Your account has been deleted successfully']);
+
     }
 }
