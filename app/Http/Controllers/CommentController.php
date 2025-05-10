@@ -13,72 +13,75 @@ class CommentController extends Controller
 
     public function store(Request $request, $post_id)
     {
-        $request->validate([
-            'content' => 'required'
+      $request->validate([
+            'content' => 'required',
         ]);
 
         $post = Post::find($post_id);
+
         if (!$post) {
-            return response()->json(['message' => 'Post not found']);
+            return response()->json(['message' => 'The specified post was not found']);
         }
 
-        $attributes = [
+        $commentData = [
             'user_id' => auth()->id(),
             'post_id' => $post_id,
-            'content' => $request->content
-
-
+            'content' => $request->content,
         ];
-        $comment = Comment::create($attributes);
-        $comment = [
-            "title" => $post->title,
-            "comment" => $comment->content
+
+        $newComment = Comment::create($commentData);
+
+        $commentResponse = [
+            "title"   => $post->title,
+            "comment" => $newComment->content,
         ];
 
         return response()->json([
-            'message' => 'Comment created successfully',
-            'created_comment' => $comment
+            'message'        => 'Comment has been successfully created',
+            'created_comment' => $commentResponse,
         ]);
+
     }
 
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'post_id'  => 'required|integer',
-            'content'  => 'required|string'
+       $request->validate([
+            'post_id' => 'required|integer',
+            'content' => 'required|string',
         ]);
+
         $comment = Comment::with('post')->find($id);
 
         if (!$comment) {
-            return response()->json(['message' => 'Comment not found']);
+            return response()->json(['message' => 'The specified comment was not found']);
         }
 
         if (!$comment->post || $comment->post->id !== $request->post_id) {
-            return response()->json(['message' => 'Comment does not belong to this post']);
+            return response()->json(['message' => 'This comment does not belong to the specified post']);
         }
 
         if ($comment->user_id !== auth()->id()) {
-            return response()->json(['message' => 'Unauthorized']);
+            return response()->json(['message' => 'You are not authorized to edit this comment']);
         }
 
-        $old_comment = $comment->content;
+        $previousCommentContent = $comment->content;
 
         $comment->update([
             'content' => $request->content,
         ]);
 
-        $comment = [
-            'title' => $comment->post->title,
-            'old_comment' => $old_comment,
-            'updated_comment' => $comment->content
+        $updatedComment = [
+            'title'            => $comment->post->title,
+            'previous_comment' => $previousCommentContent,
+            'updated_comment'  => $comment->content,
         ];
 
-
         return response()->json([
-            'message' => 'Comment updated successfully',
-            'updated_comment' => $comment
+            'message'        => 'Comment has been updated successfully',
+            'updated_comment' => $updatedComment,
         ]);
+
     }
 
     /**
@@ -87,19 +90,21 @@ class CommentController extends Controller
     public function destroy($id)
     {
         $comment = Comment::find($id);
+
         if (!$comment) {
-            return response()->json(['message' => 'Comment  not found']);
+            return response()->json(['message' => 'The comment could not be found']);
         }
 
         if ($comment->user_id !== auth()->id()) {
-            return response()->json(['message' => 'Unauthorized']);
+            return response()->json(['message' => 'You are not authorized to delete this comment']);
         }
 
         $comment->delete();
 
         return response()->json([
-            'message' => 'Comment deleted successfully',
-            'comment_id' => $comment->id
+            'message'    => 'The comment has been successfully deleted',
+            'comment_id' => $comment->id,
         ]);
+
     }
 }
