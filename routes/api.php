@@ -22,78 +22,88 @@ Route::POST('/register', [SessionController::class, 'create']);
 Route::GET('/posts', [PostController::class, 'index']);
 
 Route::GET('/posts/title/{title}', function ($title) {
-    $post = Post::with(['user.comments.user'])
-        ->where('title', 'LIKE', "%{$title}%")->get();
+   $post = Post::with(['user.comments.user'])
+        ->where('title', 'LIKE', "%{$title}%")
+        ->get();
 
-    $posts = $post->map(function ($post) {
+    $formattedPosts = $post->map(function ($post) {
         return [
-            "post_id" => $post->id,
-            "title" => $post->title,
-            "content" => $post->content,
-            "author" => $post->user->username,
-            "created_at" => $post->created_at->toDateTimeString(),
-            "comments" => $post->comments->map(function ($comment) {
+            "post_id"   => $post->id,
+            "title"     => $post->title,
+            "content"   => $post->content,
+            "author"    => $post->user->username,
+            "created_at"=> $post->created_at->toDateTimeString(),
+            "comments"  => $post->comments->map(function ($comment) {
                 return [
                     "comment_id" => $comment->id,
-                    "commentor" => $comment->user->username,
-                    "comment" => $comment->content
-
+                    "commentor"  => $comment->user->username,
+                    "comment"    => $comment->content,
                 ];
             })
         ];
     });
-    return response()->json(["Search results" => $posts]);
+
+    return response()->json(["search_results" => $formattedPosts]);
+
 });
 
 Route::GET('/posts/username/{username}', function ($username) {
-    $user = User::with('posts.comments')->where('username', $username)->first();
+   $user = User::with('posts.comments')
+        ->where('username', $username)
+        ->first();
+
     if (!$user) {
-        return response()->json('Author not found');
+        return response()->json(['message' => 'Author not found']);
     }
-    $posts = $user->posts->map(function ($post) {
+
+    $formattedPosts = $user->posts->map(function ($post) {
         return [
-            "post_id" => $post->id,
-            "title" => $post->title,
-            "content" => $post->content,
-            "created_at" => $post->created_at,
-            "comments" => $post->comments->map(function ($comment) {
+            "post_id"   => $post->id,
+            "title"     => $post->title,
+            "content"   => $post->content,
+            "created_at"=> $post->created_at,
+            "comments"  => $post->comments->map(function ($comment) {
                 return [
                     "comment_id" => $comment->id,
-                    "commentor" => $comment->user->username,
-                    "content" => $comment->content
-
+                    "commentor"  => $comment->user->username,
+                    "content"    => $comment->content,
                 ];
             })
         ];
     });
+
     return response()->json([
-        "Author" =>  $user->username,
-        "Posts" => $posts
+        "author" => $user->username,
+        "posts"  => $formattedPosts
     ]);
+
 });
 
 #to avoid conflict:  1 recent, 2 post by id arrangement
 Route::GET('/posts/recent', function () {
-
     $post = Post::with(['user.comments.user'])->latest()->get();
-    $posts = $post->map(function ($post) {
+
+    $formattedPosts = $post->map(function ($post) {
         return [
-            "post_id" => $post->id,
-            "title" => $post->title,
-            "content" => $post->content,
-            "author" => $post->user->username,
-            "created_at" => $post->created_at,
-            "comments" => $post->comments->map(function ($comment) {
+            "post_id"   => $post->id,
+            "title"     => $post->title,
+            "content"   => $post->content,
+            "author"    => $post->user->username,
+            "created_at"=> $post->created_at,
+            "comments"  => $post->comments->map(function ($comment) {
                 return [
                     "comment_id" => $comment->id,
-                    "commentor" => $comment->user->username,
-                    "comment" => $comment->content
+                    "commentor"  => $comment->user->username,
+                    "content"    => $comment->content,
                 ];
             })
         ];
     });
 
-    return response()->json(["recent feed" => $posts]);
+    return response()->json([
+        "recent_feed" => $formattedPosts
+    ]);
+
 });
 Route::GET('/posts/{id}', [PostController::class, 'show']);
 
